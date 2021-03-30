@@ -59,9 +59,9 @@ export default function ThreeEntryPoint(sceneRef) {
     // renderer.setPixelRatio( window.devicePixelRatio );
     sceneRef.appendChild(renderer.domElement);
     function render() {
-        if (tilesToGet !== 0) {
+        // if (tilesToGet !== 0) {
             requestAnimationFrame(render);
-        }
+        // }
         // renderer.render(scene, camera);
         composer.render();
     }
@@ -74,8 +74,8 @@ export default function ThreeEntryPoint(sceneRef) {
         100000000000000
     );
     camera.position.y = 1200;
-    // const ambientLight = new THREE.AmbientLight( 0xffffff, 0.3 );
-    // scene.add( ambientLight );
+    const ambientLight = new THREE.AmbientLight( 0xffffff, 0.3 );
+    scene.add( ambientLight );
 
     // const light1 = new THREE.PointLight( 0xffffff, 1, 0 );
     // scene.add( light1 );
@@ -140,13 +140,16 @@ export default function ThreeEntryPoint(sceneRef) {
 
     function assembleUrl(img, coords) {
         if (!img) {
-            return `http://192.168.1.45:8080/data/BDALTIV2_75M_rvb/${slashify(
-                coords
-            )}.png`;
+          // return `http://192.168.1.45:8080/data/BDALTIV2_75M_rvb/${slashify(
+          //       coords
+          //   )}.png`;
+            // return `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${slashify(
+            //     coords
+            // )}.png`;
+            return `https://api.mapbox.com/v4/mapbox.terrain-rgb/${slashify(
+              coords
+          )}@2x.pngraw?access_token=pk.eyJ1IjoiYWt5bGFzIiwiYSI6IkVJVFl2OXMifQ.TGtrEmByO3-99hA0EI44Ew`;
         }
-        var tileset = img ? "mapbox.streets-satellite" : "mapbox.terrain-rgb"; //
-        var res = img ? "@2x.png" : "@2x.pngraw";
-
         //domain sharding
         var serverIndex = Math.floor((coords[1] % 3) + (coords[2] % 3) / 3);
         var server = ["a", "b", "c"][serverIndex];
@@ -253,7 +256,6 @@ export default function ThreeEntryPoint(sceneRef) {
                     parserPool[parserIndex]
                         .onMessage([pixels, coords, tiles, parserIndex])
                         .then((meshes) => {
-                            console.log("parseelevationworker", meshes);
                             parserRequests++;
                             meshes.forEach((m) => makeMesh(m));
                         });
@@ -415,11 +417,11 @@ export default function ThreeEntryPoint(sceneRef) {
         camera.position.x = pxCoords.x;
         camera.position.z = pxCoords.z;
         camera.position.y = 10.629295137280347;
-        light1.position.set(
-            camera.position.x,
-            camera.position.y,
-            camera.position.z
-        );
+        // light1.position.set(
+        //     camera.position.x,
+        //     camera.position.y,
+        //     camera.position.z
+        // );
 
         moveTo(pxCoords, camera.position.y);
         window.setTimeout(function () {
