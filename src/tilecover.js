@@ -1,5 +1,5 @@
 
-var tilebelt = require('tilebelt');
+var tilebelt = require('@mapbox/tilebelt');
 
 /**
  * Given a geometry, create cells and return them in a format easily readable
@@ -40,6 +40,7 @@ function getTiles(geom, limits) {
     } else if (geom.type === 'MultiPoint') {
         for (i = 0; i < coords.length; i++) {
             tile = tilebelt.pointToTile(coords[i][0], coords[i][1], maxZoom);
+            console.log('pointToTile', coords[i][0], coords[i][1], maxZoom, tile);
             tileHash[toID(tile[0], tile[1], tile[2])] = true;
         }
     } else if (geom.type === 'LineString') {
@@ -50,11 +51,11 @@ function getTiles(geom, limits) {
             lineCover(tileHash, coords[i], maxZoom);
         }
     } else if (geom.type === 'Polygon') {
-        polygonCover(tileHash, tiles, coords, maxZoom);
+        polygonCover(tileHash, tiles, [coords], maxZoom);
 
     } else if (geom.type === 'MultiPolygon') {
         for (i = 0; i < coords.length; i++) {
-            polygonCover(tileHash, tiles, coords[i], maxZoom);
+            polygonCover(tileHash, tiles, coords, maxZoom);
         }
     } else {
         throw new Error('Geometry type not implemented');

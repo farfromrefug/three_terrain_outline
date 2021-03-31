@@ -48,7 +48,7 @@ export function getBaseLog(base, result) {
 
 
 //scene coordinates to lngLat (as intersecting with plane)
-// function unproject(pt){
+// export function unproject(pt){
 //     var lngLat = mercator.ll([pt.x+basePlaneDimension/2, pt.y+basePlaneDimension/2],0);
 //     return lngLat
 // }

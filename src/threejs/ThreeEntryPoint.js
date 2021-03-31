@@ -1,6 +1,7 @@
 // Import dependencies
-import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import * as THREE from "three/build/three.module";
+import { OrbitControls, MapControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { FirstPersonControls } from "three/examples/jsm/controls/FirstPersonControls.js";
 
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
@@ -94,7 +95,7 @@ export default function ThreeEntryPoint(sceneRef) {
             });
         }
     }
-    var controls = new OrbitControls(camera, renderer.domElement);
+    var controls = new MapControls(camera, renderer.domElement);
     // controls.maxPolarAngle = Math.PI * 0.495;
     // controls.target.set(0, 10, 0);
     // controls.minDistance = 10.0;
@@ -203,26 +204,29 @@ export default function ThreeEntryPoint(sceneRef) {
     function updateTiles() {
         zoom = Math.floor(getZoom());
 
-        var ul = { x: -1, y: -1, z: -1 };
-        var ur = { x: 1, y: -1, z: -1 };
-        var lr = { x: 1, y: 1, z: 1 };
-        var ll = { x: -1, y: 1, z: 1 };
 
-        var corners = [ul, ur, lr, ll, ul].map(function (corner) {
-            raycaster.setFromCamera(corner, camera);
-            const r = raycaster.intersectObject(plane)[0];
-            if (r) {
-                return r.point;
-            }
-            return screenPosition;
-        });
+        // const 
+        
+        // var ul = { x: -1, y: -1, z: -1 };
+        // var ur = { x: 1, y: -1, z: -1 };
+        // var lr = { x: 1, y: 1, z: 1 };
+        // var ll = { x: -1, y: 1, z: 1 };
 
-        if (corners[0] === screenPosition) return;
-        else screenPosition = corners[0];
+        // var corners = [ul, ur, lr, ll, ul].map(function (corner) {
+        //     raycaster.setFromCamera(corner, camera);
+        //     const r = raycaster.intersectObject(plane)[0];
+        //     if (r) {
+        //         return r.point;
+        //     }
+        //     return screenPosition;
+        // });
 
-        console.log("corners", corners);
-        updater.onMessage([zoom, corners]).then((cb) => {
-            console.log("updatetileworker", cb);
+        // if (corners[0] === screenPosition) return;
+        // else screenPosition = corners[0];
+
+        console.log("updateTiles", controls.object.position, zoom);
+        updater.onMessage({zoom:zoom, position:{x: controls.object.position.x,
+          y:controls.object.position.z},distance:50, fov: camera.getEffectiveFOV() * camera.aspect, azimuth:controls.getAzimuthalAngle()}).then((cb) => {
             var queue = cb.getTiles[0].length;
 
             if (queue > 0) {
@@ -233,17 +237,25 @@ export default function ThreeEntryPoint(sceneRef) {
 
         // setHash()
     }
-
+    const meshCache = {}
     // given a list of elevation and imagery tiles, download
     function getTiles([tiles, elevation]) {
         tiles = tiles.map(function (tile) {
             return slashify(tile);
         });
 
-        tilesToGet += tiles.length;
-        render();
-        updaterRequests += tiles.length;
+        const current  = Object.keys(meshCache);
+        current.forEach(k=>{
+          if (tiles.indexOf(k) === -1) {
+            scene.remove(meshCache[k]);
+            delete meshCache[k];
+          }
+        })
+        tiles = tiles.filter(k=>!meshCache[k])
 
+        tilesToGet += tiles.length;
+        // render();
+        updaterRequests += tiles.length;
         elevation.forEach(function (coords) {
             //download the elevation image
             getPixels(
@@ -329,6 +341,10 @@ export default function ThreeEntryPoint(sceneRef) {
         return canvasScaled;
     }
 
+    // const meshMaterial = new THREE.MeshNormalMaterial({
+    //     flatShading: true,
+    //     color: 0xffffff,
+    // });
     const meshMaterial = new THREE.MeshBasicMaterial({
         flatShading: true,
         color: 0x000000,
@@ -336,7 +352,6 @@ export default function ThreeEntryPoint(sceneRef) {
 
     function makeMesh([data, [z, x, y]]) {
         meshes++;
-
         var tileSize = basePlaneDimension / Math.pow(2, z);
         var vertices = 128;
         var segments = vertices - 1;
@@ -377,8 +392,8 @@ export default function ThreeEntryPoint(sceneRef) {
         geometry.computeVertexNormals();
 
         var plane = new THREE.Mesh(geometry, meshMaterial);
-
         plane.coords = slashify([z, x, y]);
+        meshCache[plane.coords] = plane;
         plane.zoom = z;
         scene.add(plane);
     }
